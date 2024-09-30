@@ -1,0 +1,45 @@
+version: '3'
+services:
+  thor:
+    image: vechain/thor:latest
+    ports:
+      - "8669:8669"
+      - "11235:11235"
+      - "11235:11235/udp"
+    volumes:
+      - thor-data:/root/.thor
+    command: 
+      - solo
+      - --api-addr
+      - 0.0.0.0:8669
+    environment:
+      THOR_NETWORK: solo
+    networks:
+      - gromm-network
+
+  api:
+    build:
+      context: ./api
+      dockerfile: dev.Dockerfile
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./api/src:/app/src
+      - ./api/tests:/app/tests
+      - ./api/blockchain:/app/blockchain
+      - /app/node_modules
+    environment:
+      - THOR_URL=http://thor:8669
+      - PRIVATE_KEY
+    depends_on:
+      - thor
+    command: npx jest --watchAll
+    networks:
+      - gromm-network
+
+volumes:
+  thor-data:
+
+networks:
+  gromm-network:
+    driver: bridge
